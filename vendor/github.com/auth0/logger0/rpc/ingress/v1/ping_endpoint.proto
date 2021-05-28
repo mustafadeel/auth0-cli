@@ -1,0 +1,19 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/auth0/logger0/rpc/ingress/v1;ingressv1";
+
+package auth0.logger0.ingress.v1;
+
+service PingEndpoint {
+  // Ping is an internal mechanism for operators to test auth without having to
+  // know the API at all.
+  //
+  // Example: curl http://$HOST/v1/ping
+  rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      get: "/v1/ping"
+    };
+  };
+}

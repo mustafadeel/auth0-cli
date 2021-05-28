@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/auth0/iron-go v0.0.0-20201014180807-0d1b3dc991bc
 	github.com/auth0/pkg v0.12.0
+	github.com/brianvoe/gofakeit/v6 v6.4.1
 	github.com/eapache/go-resiliency v1.2.0
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect

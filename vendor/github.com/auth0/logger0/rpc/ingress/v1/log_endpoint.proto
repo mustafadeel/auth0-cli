@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "google/api/annotations.proto";
+import "api/logger0.proto";
+
+option go_package = "github.com/auth0/logger0/rpc/ingress/v1;ingressv1";
+
+package auth0.logger0.ingress.v1;
+
+service LogEndpoint {
+  rpc Post (PostLogRequest) returns (PostLogResponse) {
+    option (google.api.http) = {
+      post: "/v1/logs"
+      body: "*"
+    };
+  };
+}
+
+message PostLogRequest {
+  string tenant = 1;
+  logger0.LogRecord.Type type = 2;
+  map<string, string> metadata = 3;
+  repeated bytes messages = 4;
+}
+
+message PostLogResponse {
+}

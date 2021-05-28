@@ -42,11 +42,13 @@ github.com/alecthomas/chroma/styles
 # github.com/andybalholm/brotli v1.0.1
 ## explicit
 github.com/andybalholm/brotli
-# github.com/auth0/logger0 v0.0.0-20210528035717-16b9cd8d7d2c
+# github.com/auth0/logger0 v0.0.0-20210528150855-34c0d3f9225a
 ## explicit
 github.com/auth0/logger0
 github.com/auth0/logger0/rpc/auth
+github.com/auth0/logger0/rpc/client
 github.com/auth0/logger0/rpc/control/v1
+github.com/auth0/logger0/rpc/ingress/v1
 # github.com/benbjohnson/clock v1.1.0
 ## explicit
 # github.com/briandowns/spinner v1.12.1-0.20210421154440-eac1b899fcf1

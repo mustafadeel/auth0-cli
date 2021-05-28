@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.8
 	github.com/andybalholm/brotli v1.0.1 // indirect
-	github.com/auth0/logger0 v0.0.0-20210528035717-16b9cd8d7d2c
+	github.com/auth0/logger0 v0.0.0-20210528150855-34c0d3f9225a
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/briandowns/spinner v1.12.1-0.20210421154440-eac1b899fcf1
 	github.com/charmbracelet/glamour v0.2.0
@@ -43,7 +43,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
-	google.golang.org/grpc v1.37.1
+	google.golang.org/grpc v1.37.1 // indirect
 	gopkg.in/auth0.v5 v5.17.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
