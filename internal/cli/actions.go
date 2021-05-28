@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -78,11 +77,13 @@ auth0 actions logs tail -a <action-name> -t <trigger type>
 				return err
 			}
 
+			ctx := cmd.Context()
+
 			// We're covering both cases of action being supplied
 			// via --action flag, or being chosen.
 			var actionID string
 			if inputs.ActionName != "" && inputs.ActionName != optNone {
-				a, err := cli.getActionByName(cmd.Context(), inputs.ActionName)
+				a, err := cli.getActionByName(ctx, inputs.ActionName)
 				if err != nil {
 					return err
 				}
@@ -93,7 +94,7 @@ auth0 actions logs tail -a <action-name> -t <trigger type>
 				inputs.Trigger = ""
 			}
 
-			log.Printf("chosen trigger: %q, action: %q", inputs.Trigger, actionID)
+			logger0Stream(ctx, cli.tenant, inputs.Trigger, actionID)
 			return nil
 		},
 	}
