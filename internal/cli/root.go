@@ -108,6 +108,7 @@ func Execute() {
 	rootCmd.AddCommand(brandingCmd(cli))
 	rootCmd.AddCommand(rolesCmd(cli))
 	rootCmd.AddCommand(ipsCmd(cli))
+	rootCmd.AddCommand(actionsCmd(cli))
 
 	// keep completion at the bottom:
 	rootCmd.AddCommand(completionCmd(cli))
@@ -144,7 +145,7 @@ func Execute() {
 		os.Exit(1)
 	}
 
-	ctx, cancel := context.WithTimeout(cli.context, 3 * time.Second)
+	ctx, cancel := context.WithTimeout(cli.context, 3*time.Second)
 	// defers are executed in LIFO order
 	defer cancel()
 	defer cli.tracker.Wait(ctx) // No event should be tracked after this has run, or it will panic e.g. in earlier deferred functions
