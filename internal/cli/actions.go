@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/auth0/auth0-cli/internal/ansi"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -28,17 +29,23 @@ var (
 		ShortForm: "t",
 		Help:      "Trigger of the action.",
 	}
+
+	actionDrainTarget = Argument{
+		Name: "Drain Target",
+		Help: "The URL target of your drain provider",
+	}
 )
 
 func actionsCmd(cli *cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "actions",
 		Short: "Manage resources for actions",
-		Long:  "Manage resources for applications.",
+		Long:  "Manage resources for actions.",
 	}
 
 	cmd.SetUsageTemplate(resourceUsageTemplate())
 	cmd.AddCommand(actionsLogsCmd(cli))
+	cmd.AddCommand(actionsDrainsCmd(cli))
 
 	return cmd
 }
@@ -95,13 +102,106 @@ auth0 actions logs tail -a <action-name> -t <trigger type>
 				inputs.Trigger = ""
 			}
 
-			logger0Stream(ctx, cli.tenant, inputs.Trigger, actionID)
+			cli.renderer.Infof(ansi.Faint("Waiting for logs..."))
+
+			actionMappings := map[string]string{}
+
+			for _, opt := range actionOpts {
+				actionMappings[opt.value] = opt.label
+			}
+
+			logger0Stream(ctx, cli.tenant, inputs.Trigger, actionID, actionMappings)
 			return nil
 		},
 	}
 
 	actionName.RegisterString(cmd, &inputs.ActionName, "")
 	actionTrigger.RegisterString(cmd, &inputs.Trigger, "")
+	return cmd
+}
+
+func actionsDrainsCmd(cli *cli) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "drains",
+		Short: "Manage resources for action drains",
+		Long:  "Manage resources for action drains.",
+	}
+
+	cmd.SetUsageTemplate(resourceUsageTemplate())
+	cmd.AddCommand(addActionsDrainCmd(cli))
+	cmd.AddCommand(deleteActionsDrainCmd(cli))
+
+	return cmd
+}
+
+// auth0 actions drains url:///.... filters
+func addActionsDrainCmd(cli *cli) *cobra.Command {
+	var inputs struct {
+		Target string
+	}
+
+	cmd := &cobra.Command{
+		Use:   "add",
+		Args:  cobra.MaximumNArgs(1),
+		Short: "Add a new drain to watch your actions logs",
+		Long:  "Add a new drain to watch your actions logs.",
+		Example: `auth0 actions drains add
+auth0 actions drains add <url>
+`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				err := actionDrainTarget.Ask(cmd, &inputs.Target)
+				if err != nil {
+					return err
+				}
+			} else {
+				inputs.Target = args[0]
+			}
+
+			if err := logger0DrainAdd(cmd.Context(), cli.tenant, inputs.Target, nil); err != nil {
+				return err
+			}
+
+			cli.renderer.Infof("Drain successfully added %s", inputs.Target)
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func deleteActionsDrainCmd(cli *cli) *cobra.Command {
+	var inputs struct {
+		Target string
+	}
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Args:  cobra.MaximumNArgs(1),
+		Short: "Delete an existing drain",
+		Long:  "Delete an existing drain.",
+		Example: `auth0 actions drains delete
+auth0 actions drains delete <url>
+`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				err := actionDrainTarget.Ask(cmd, &inputs.Target)
+				if err != nil {
+					return err
+				}
+			} else {
+				inputs.Target = args[0]
+			}
+
+			if err := logger0DrainDelete(cmd.Context(), cli.tenant, inputs.Target); err != nil {
+				return err
+			}
+
+			cli.renderer.Infof("Drain successfully removed %s", inputs.Target)
+			return nil
+		},
+	}
+
 	return cmd
 }
 
@@ -133,7 +233,7 @@ func (c *cli) actionPickerOptions() (pickerOptions, error) {
 
 	for _, a := range actions {
 		opts = append(opts, pickerOption{
-			value: a.Name,
+			value: a.ID,
 			label: a.Name,
 		})
 	}
