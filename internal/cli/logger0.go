@@ -3,7 +3,6 @@ package cli
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net/url"
@@ -11,11 +10,9 @@ import (
 
 	"github.com/auth0/auth0-cli/internal/ansi"
 	"github.com/auth0/logger0"
-	"github.com/auth0/logger0/rpc/auth"
+	"github.com/auth0/logger0/rpc/client"
 	controlv1 "github.com/auth0/logger0/rpc/control/v1"
 	"github.com/joeshaw/envdecode"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 func logger0Stream(ctx context.Context, tenant, trigger, actionID string) error {
@@ -30,12 +27,10 @@ func logger0Stream(ctx context.Context, tenant, trigger, actionID string) error 
 		log.Fatal(err)
 	}
 
-	conn, err := dialLogger0(ctx, cfg.URL, cfg.Token)
+	client, err := client.NewSessionEndpointClient(ctx, cfg.URL, cfg.Token)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
-	client := controlv1.NewSessionEndpointClient(conn)
 
 	stream, err := client.CreateSession(ctx, &controlv1.CreateSessionRequest{
 		Type:   logger0.LogRecord_TYPE_ACTIONS,
@@ -65,29 +60,4 @@ func logger0Stream(ctx context.Context, tenant, trigger, actionID string) error 
 func formatLogRecord(rec *logger0.LogRecord) {
 	msgs := bytes.Join(rec.Messages, []byte("\n"))
 	fmt.Printf("%s - %s\n", ansi.Yellow(time.Now().Format(time.RFC3339)), msgs)
-}
-
-func dialLogger0(ctx context.Context, u *url.URL, token string) (*grpc.ClientConn, error) {
-	opts := []grpc.DialOption{
-		grpc.WithPerRPCCredentials(&auth.GRPCCredentials{Token: token}),
-		grpc.WithBlock(),
-	}
-
-	if u.Scheme == "http" {
-		opts = append(opts, grpc.WithInsecure())
-	} else {
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
-	}
-
-	addr := u.Host
-	if u.Port() == "" {
-		switch u.Scheme {
-		case "https":
-			addr += ":443"
-		case "http":
-			addr += ":80"
-		}
-	}
-
-	return grpc.DialContext(ctx, addr, opts...)
 }
