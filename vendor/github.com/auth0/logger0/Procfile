@@ -1,0 +1,3 @@
+ingress: SERVICE_NAME=logger0-ingress-server ./.tools/bin/logger0 ingress-server
+control: SERVICE_NAME=logger0-control-server HTTP_PORT=9090 GRPC_PORT=9091 ./.tools/bin/logger0 control-server
+redis: redis-server

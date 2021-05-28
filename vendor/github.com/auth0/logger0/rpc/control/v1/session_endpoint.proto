@@ -1,0 +1,22 @@
+syntax = "proto3";
+import "api/logger0.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/auth0/logger0/rpc/control/v1;controlv1";
+
+package auth0.logger0.control.v1;
+
+service SessionEndpoint {
+  rpc CreateSession (CreateSessionRequest) returns (stream logger0.LogRecord) {
+    option (google.api.http) = {
+      post: "/v1/sessions"
+      body: "*"
+    };
+  };
+}
+
+message CreateSessionRequest {
+  string tenant = 1;
+  logger0.LogRecord.Type type = 2;
+  map<string, string> filters = 3;
+}

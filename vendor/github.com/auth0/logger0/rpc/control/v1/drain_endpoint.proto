@@ -1,0 +1,72 @@
+syntax = "proto3";
+import "api/logger0.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+option go_package = "github.com/auth0/logger0/rpc/control/v1;controlv1";
+
+package auth0.logger0.control.v1;
+
+service DrainEndpoint {
+  rpc ListDrains (ListDrainsRequest) returns (ListDrainsResponse) {
+    option (google.api.http) = {
+      get: "/v1/drains"
+    };
+  };
+
+  rpc CreateDrain (CreateDrainRequest) returns (CreateDrainResponse) {
+    option (google.api.http) = {
+      post: "/v1/drains"
+      body: "*"
+    };
+  };
+
+  rpc UpdateDrain (UpdateDrainRequest) returns (UpdateDrainResponse) {
+    option (google.api.http) = {
+      put: "/v1/drains"
+      body: "*"
+    };
+  };
+
+  rpc DeleteDrain (DeleteDrainRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/drains"
+    };
+  };
+}
+
+message ListDrainsRequest {
+  string tenant = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListDrainsResponse {
+  repeated logger0.Drain drains = 1;
+  string next_page_token = 2;
+}
+
+message CreateDrainRequest {
+  string tenant = 1 [(validate.rules).string.min_len = 1];
+  logger0.Sink sink = 2 [(validate.rules).message.required = true];
+  repeated logger0.Filter filters = 3;
+}
+
+message CreateDrainResponse {
+  logger0.Drain drain = 1;
+}
+
+message UpdateDrainRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+  logger0.Sink sink = 2 [(validate.rules).message.required = true];
+  repeated logger0.Filter filters = 3;
+}
+
+message UpdateDrainResponse {
+  logger0.Drain drain = 1;
+}
+
+message DeleteDrainRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
