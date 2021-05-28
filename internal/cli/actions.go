@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -140,12 +141,57 @@ func (c *cli) actionPickerOptions() (pickerOptions, error) {
 	return opts, nil
 }
 
+// NOTE(cyx): This was only a hack because the actions bits weren't in the
+// management API yet. Once it is, using WithClientCredentials should just
+// work.
+//
+// We will have to replace the logic probably to do access token refreshes to
+// handle the client ID / secret case.
+func (c *cli) ensureTenantHasAccessToken(ctx context.Context) error {
+	t, err := c.getTenant()
+	if err != nil {
+		return err
+	}
+
+	if t.AccessToken != "" && !isExpired(t.ExpiresAt, accessTokenExpThreshold) {
+		return nil
+	}
+
+	const path = "/oauth/token"
+
+	body := map[string]string{
+		"client_id":     t.ClientID,
+		"client_secret": t.ClientSecret,
+		"audience":      fmt.Sprintf("https://%s/api/v2/", t.Domain),
+		"grant_type":    "client_credentials",
+	}
+
+	var payload struct {
+		AccessToken string `json:"access_token"`
+	}
+
+	if err := c.doReq(ctx, http.MethodPost, path, body, &payload); err != nil {
+		return err
+	}
+
+	t.AccessToken = payload.AccessToken
+	// NOTE(cyx): this is hard coded that we know it's 1 day for every
+	// token.
+	t.ExpiresAt = time.Now().Add(time.Hour * 23)
+
+	return c.addTenant(t)
+}
+
 type action struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
 func (c *cli) listActions(ctx context.Context) ([]action, error) {
+	if err := c.ensureTenantHasAccessToken(ctx); err != nil {
+		return nil, err
+	}
+
 	const path = "/api/v2/actions/actions"
 
 	var payload struct {
@@ -184,6 +230,10 @@ type trigger struct {
 const statusCurrent = "CURRENT"
 
 func (c *cli) listActionsTriggers(ctx context.Context) ([]trigger, error) {
+	if err := c.ensureTenantHasAccessToken(ctx); err != nil {
+		return nil, err
+	}
+
 	var payload struct {
 		Triggers []trigger `json:"triggers"`
 	}
@@ -220,12 +270,19 @@ func (c *cli) doReq(ctx context.Context, method, path string, in, out interface{
 		if err := json.NewEncoder(buf).Encode(in); err != nil {
 			return errors.Wrap(err, "json Encode failed")
 		}
+		body = buf
 	}
+
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		return errors.Wrap(err, "NewRequest failed")
 	}
-	req.Header.Set("Authorization", "Bearer "+tenant.AccessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	// For doing M2M exchanges, this will be empty.
+	if tenant.AccessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+tenant.AccessToken)
+	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
