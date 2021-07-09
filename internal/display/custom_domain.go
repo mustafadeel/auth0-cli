@@ -1,19 +1,20 @@
 package display
 
 import (
-	"strconv"
-
 	"github.com/auth0/auth0-cli/internal/ansi"
 	"gopkg.in/auth0.v5/management"
 )
 
 type customDomainView struct {
-	ID                 string
-	Domain             string
-	Status             string
-	Primary            bool
-	ProvisioningType   string
-	VerificationMethod string
+	ID                   string
+	Domain               string
+	Status               string
+	Primary              string
+	ProvisioningType     string
+	VerificationMethod   string
+	TLSPolicy            string
+	CustomClientIPHeader string
+	raw                  interface{}
 }
 
 func (v *customDomainView) AsTableHeader() []string {
@@ -33,10 +34,16 @@ func (v *customDomainView) KeyValues() [][]string {
 		{"ID", ansi.Faint(v.ID)},
 		{"DOMAIN", v.Domain},
 		{"STATUS", v.Status},
-		{"PRIMARY", strconv.FormatBool(v.Primary)},
+		{"PRIMARY", v.Primary},
 		{"PROVISIONING TYPE", v.ProvisioningType},
 		{"VERIFICATION METHOD", v.VerificationMethod},
+		{"TLS POLICY", v.TLSPolicy},
+		{"CUSTOM CLIENT IP HEADER", v.CustomClientIPHeader},
 	}
+}
+
+func (v *customDomainView) Object() interface{} {
+	return v.raw
 }
 
 func (r *Renderer) CustomDomainList(customDomains []*management.CustomDomain) {
@@ -52,11 +59,7 @@ func (r *Renderer) CustomDomainList(customDomains []*management.CustomDomain) {
 
 	var res []View
 	for _, customDomain := range customDomains {
-		res = append(res, &customDomainView{
-			ID:     customDomain.GetID(),
-			Domain: customDomain.GetDomain(),
-			Status: customDomainStatusColor(customDomain.GetStatus()),
-		})
+		res = append(res, makeCustomDomainView(customDomain))
 	}
 
 	r.Results(res)
@@ -64,27 +67,35 @@ func (r *Renderer) CustomDomainList(customDomains []*management.CustomDomain) {
 
 func (r *Renderer) CustomDomainShow(customDomain *management.CustomDomain) {
 	r.Heading("custom domain")
-	r.customDomainResult(customDomain)
+	r.Result(makeCustomDomainView(customDomain))
 }
 
 func (r *Renderer) CustomDomainCreate(customDomain *management.CustomDomain) {
 	r.Heading("custom domain created")
-	r.customDomainResult(customDomain)
+	r.Result(makeCustomDomainView(customDomain))
 }
 
-func (r *Renderer) customDomainResult(customDomain *management.CustomDomain) {
-	r.Result(&customDomainView{
-		ID:                 ansi.Faint(customDomain.GetID()),
-		Domain:             customDomain.GetDomain(),
-		Status:             customDomainStatusColor(customDomain.GetStatus()),
-		Primary:            customDomain.GetPrimary(),
-		ProvisioningType:   customDomain.GetType(),
-		VerificationMethod: customDomain.GetVerificationMethod(),
-	})
+func (r *Renderer) CustomDomainUpdate(customDomain *management.CustomDomain) {
+	r.Heading("custom domain updated")
+	r.Result(makeCustomDomainView(customDomain))
+}
+
+func makeCustomDomainView(customDomain *management.CustomDomain) *customDomainView {
+	return &customDomainView{
+		ID:                   ansi.Faint(customDomain.GetID()),
+		Domain:               customDomain.GetDomain(),
+		Status:               customDomainStatusColor(customDomain.GetStatus()),
+		Primary:              boolean(customDomain.GetPrimary()),
+		ProvisioningType:     customDomain.GetType(),
+		VerificationMethod:   customDomain.GetVerificationMethod(),
+		TLSPolicy:            customDomain.GetTLSPolicy(),
+		CustomClientIPHeader: customDomain.GetCustomClientIPHeader(),
+		raw:                  customDomain,
+	}
 }
 
 func customDomainStatusColor(v string) string {
-	switch(v) {
+	switch v {
 	case "disabled":
 		return ansi.Red(v)
 	case "pending", "pending_verification":

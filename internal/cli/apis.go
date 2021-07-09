@@ -274,7 +274,7 @@ auth0 apis update -n myapi -e 6100 --offline-access=true`,
 				current, err = cli.api.ResourceServer.Read(url.PathEscape(inputs.ID))
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load API. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load API: %w", err)
 			}
 
 			if err := apiName.AskU(cmd, &inputs.Name, current.Name); err != nil {
@@ -392,8 +392,8 @@ func openApiCmd(cli *cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "open",
 		Args:  cobra.MaximumNArgs(1),
-		Short: "Open API settings page in Auth0 Manage",
-		Long:  "Open API settings page in Auth0 Manage.",
+		Short: "Open API settings page in the Auth0 Dashboard",
+		Long:  "Open API settings page in the Auth0 Dashboard.",
 		Example: `auth0 apis open
 auth0 apis open <id|audience>`,
 		RunE: func(cmd *cobra.Command, args []string) error {

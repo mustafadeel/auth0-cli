@@ -37,7 +37,7 @@ With the Auth0 CLI, you can:
 #### [Homebrew](https://brew.sh/)
 
 ```bash
-brew install auth0/auth0-cli/auth0
+ brew tap auth0/auth0-cli && brew install auth0
 ```
 
 #### Manually
@@ -218,6 +218,17 @@ Failed Login	hello	7 minutes ago	N/A	my awesome app
 	  qs: {}
 	  session_id: QXV0aDAgaXMgaGlyaW5nISBhdXRoMC5jb20vY2FyZWVycyAK
 	userid: auth0|QXV0aDAgaXMgaGlyaW5nISBhdXRoMC5jb20vY2FyZWVycyAK
+```
+
+## Customization
+
+The authenticator of the CLI defaults to the default Auth0 cloud `auth0.auth0.com`. This can be customized for personalized cloud offerings by setting the following env variables:
+
+```
+	AUTH0_AUDIENCE - The audience of the Auth0 Management API (System API) to use.
+	AUTH0_CLIENT_ID - Client ID  of an application configured with the Device Code grant type.
+	AUTH0_DEVICE_CODE_ENDPOINT - Device Authorization URL
+	AUTH0_OAUTH_TOKEN_ENDPOINT - OAuth Token URL
 ```
 
 ## Anonymous Analytics

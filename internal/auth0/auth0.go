@@ -8,13 +8,16 @@ import (
 // API mimics `management.Management`s general interface, except it refers to
 // the interfaces instead of the concrete structs.
 type API struct {
+	Action         ActionAPI
 	Anomaly        AnomalyAPI
 	Branding       BrandingAPI
 	Client         ClientAPI
 	Connection     ConnectionAPI
 	CustomDomain   CustomDomainAPI
+	EmailTemplate  EmailTemplateAPI
 	Log            LogAPI
 	LogStream      LogStreamAPI
+	Organization   OrganizationAPI
 	ResourceServer ResourceServerAPI
 	Role           RoleAPI
 	Rule           RuleAPI
@@ -24,18 +27,21 @@ type API struct {
 
 func NewAPI(m *management.Management) *API {
 	return &API{
+		Action:         m.Action,
 		Anomaly:        m.Anomaly,
 		Branding:       m.Branding,
 		Client:         m.Client,
+		Connection:     m.Connection,
 		CustomDomain:   m.CustomDomain,
+		EmailTemplate:  m.EmailTemplate,
 		Log:            m.Log,
 		LogStream:      m.LogStream,
+		Organization:   m.Organization,
 		ResourceServer: m.ResourceServer,
 		Role:           m.Role,
 		Rule:           m.Rule,
 		Tenant:         m.Tenant,
 		User:           m.User,
-		Connection:     m.Connection,
 	}
 }
 

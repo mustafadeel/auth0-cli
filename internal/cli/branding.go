@@ -84,6 +84,7 @@ func brandingCmd(cli *cli) *cobra.Command {
 	cmd.AddCommand(updateBrandingCmd(cli))
 	cmd.AddCommand(templateCmd(cli))
 	cmd.AddCommand(customDomainsCmd(cli))
+	cmd.AddCommand(emailTemplateCmd(cli))
 	return cmd
 }
 
@@ -97,6 +98,19 @@ func templateCmd(cli *cli) *cobra.Command {
 	cmd.SetUsageTemplate(resourceUsageTemplate())
 	cmd.AddCommand(showBrandingTemplateCmd(cli))
 	cmd.AddCommand(updateBrandingTemplateCmd(cli))
+	return cmd
+}
+
+func emailTemplateCmd(cli *cli) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "emails",
+		Short: "Manage custom email templates",
+		Long:  "Manage custom email templates. This requires a custom email provider to be configured for the tenant.",
+	}
+
+	cmd.SetUsageTemplate(resourceUsageTemplate())
+	cmd.AddCommand(showEmailTemplateCmd(cli))
+	cmd.AddCommand(updateEmailTemplateCmd(cli))
 	return cmd
 }
 
@@ -137,13 +151,13 @@ func updateBrandingCmd(cli *cli) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "update",
-		Args:    cobra.NoArgs,
-		Short:   "Update the custom branding settings for Universal Login",
-		Long:    "Update the custom branding settings for Universal Login.",
+		Use:   "update",
+		Args:  cobra.NoArgs,
+		Short: "Update the custom branding settings for Universal Login",
+		Long:  "Update the custom branding settings for Universal Login.",
 		Example: `auth0 branding update
-auth0 branding update --accent '#B24592' --background '#F2DDEC' 
-auth0 branding update -a '#B24592' -b '#F2DDEC --logo 'https://example.com/logo.png`,
+auth0 branding update --accent "#FF4F40" --background "#2A2E35" 
+auth0 branding update -a "#FF4F40" -b "#2A2E35" --logo "https://example.com/logo.png"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var current *management.Branding
 
@@ -167,21 +181,24 @@ auth0 branding update -a '#B24592' -b '#F2DDEC --logo 'https://example.com/logo.
 
 			// Load updated values into a fresh branding instance
 			b := &management.Branding{}
+			isAccentColorSet := len(inputs.AccentColor) > 0
+			isBackgroundColorSet := len(inputs.BackgroundColor) > 0
+			currentHasColors := current.Colors != nil
 
-			if b.Colors == nil {
+			if isAccentColorSet || isBackgroundColorSet || currentHasColors {
 				b.Colors = &management.BrandingColors{}
-			}
 
-			if len(inputs.AccentColor) == 0 {
-				b.Colors.Primary = current.GetColors().Primary
-			} else {
-				b.Colors.Primary = &inputs.AccentColor
-			}
+				if isAccentColorSet {
+					b.Colors.Primary = &inputs.AccentColor
+				} else if currentHasColors {
+					b.Colors.Primary = current.Colors.Primary
+				}
 
-			if len(inputs.BackgroundColor) == 0 {
-				b.Colors.PageBackground = current.GetColors().PageBackground
-			} else {
-				b.Colors.PageBackground = &inputs.BackgroundColor
+				if isBackgroundColorSet {
+					b.Colors.PageBackground = &inputs.BackgroundColor
+				} else if currentHasColors {
+					b.Colors.PageBackground = current.Colors.PageBackground
+				}
 			}
 
 			if len(inputs.LogoURL) == 0 {

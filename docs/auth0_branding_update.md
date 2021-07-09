@@ -1,4 +1,11 @@
+---
+layout: default
+---
 ## auth0 branding update
+
+Update the custom branding settings for Universal Login
+
+### Synopsis
 
 Update the custom branding settings for Universal Login.
 
@@ -10,11 +17,11 @@ auth0 branding update [flags]
 
 ```
 auth0 branding update
-auth0 branding update --accent '#B24592' --background '#F2DDEC' 
-auth0 branding update -a '#B24592' -b '#F2DDEC --logo 'https://example.com/logo.png
+auth0 branding update --accent "#FF4F40" --background "#2A2E35" 
+auth0 branding update -a "#FF4F40" -b "#2A2E35" --logo "https://example.com/logo.png"
 ```
 
-### Flags
+### Options
 
 ```
   -a, --accent string       Accent color.
@@ -25,7 +32,7 @@ auth0 branding update -a '#B24592' -b '#F2DDEC --logo 'https://example.com/logo.
   -l, --logo string         URL for the logo. Must use HTTPS.
 ```
 
-### Flags inherited from parent commands
+### Options inherited from parent commands
 
 ```
       --debug           Enable debug mode.
@@ -39,3 +46,4 @@ auth0 branding update -a '#B24592' -b '#F2DDEC --logo 'https://example.com/logo.
 ### SEE ALSO
 
 * [auth0 branding](auth0_branding.md)	 - Manage branding options
+

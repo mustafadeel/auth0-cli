@@ -11,6 +11,9 @@ tests:
   auth0 logs list:
     exit-code: 0
 
+  auth0 logs streams list:
+    exit-code: 0
+
   auth0 tenants list:
     exit-code: 0
 
@@ -18,6 +21,18 @@ tests:
     exit-code: 0
 
   auth0 rules list:
+    exit-code: 0
+
+  auth0 actions list:
+    exit-code: 0
+
+  auth0 orgs list:
+    exit-code: 0
+
+  auth0 branding domains list:
+    exit-code: 0
+
+  auth0 quickstarts list:
     exit-code: 0
 
   auth0 completion bash:
@@ -276,7 +291,7 @@ tests:
         - IDENTIFIER            http://integration-test-api-def2
         - SCOPES                read:todos write:todos
         - TOKEN LIFETIME        86400
-        - ALLOW OFFLINE ACCESS  false
+        - ALLOW OFFLINE ACCESS  ✗
 
   # Test 'apis create' --token-lifetime flag
   apis create token lifetime 1000 and check data:
@@ -306,7 +321,7 @@ tests:
     exit-code: 0
     stdout:
       contains:
-        - ALLOW OFFLINE ACCESS  true
+        - ALLOW OFFLINE ACCESS  ✓
 
   apis create offline access false and check data:
     command: auth0 apis create --name integration-test-api-offacc3 --identifier http://integration-test-api-offacc3 --scopes read:todos --offline-access=false --format json
@@ -335,11 +350,15 @@ tests:
     command: auth0 apis show $(cat ./integration/identifiers/api-id) # depends on "apis create test app" test
     stdout:
       contains:
-        - NAME                  integration-test-api-newapi
-        - IDENTIFIER            http://integration-test-api-newapi
-        - SCOPES                read:todos
-        - TOKEN LIFETIME        86400
-        - ALLOW OFFLINE ACCESS  false
+        - NAME                  integration-test-api-newapi         
+        - IDENTIFIER            http://integration-test-api-newapi  
+        - SCOPES                read:todos                          
+        - TOKEN LIFETIME        86400                               
+        - ALLOW OFFLINE ACCESS  ✗
+    exit-code: 0
+
+  apis scopes list:
+    command: auth0 apis scopes list $(cat ./integration/identifiers/api-id) # depends on "apis create test app" test
     exit-code: 0
 
   # Test 'apis update'; all tests depend on "apis create test api" test
@@ -384,8 +403,8 @@ tests:
     exit-code: 0
     stdout:
       json:
-        Email: "testuser@example.com"
-        Connection: "Username-Password-Authentication"
+        email:      "testuser@example.com"
+        connection: "Username-Password-Authentication"
 
   users create and check output:
     command: auth0 users create --name integration-test-user-new2 --connection Username-Password-Authentication --email testuser2@example.com --password testUser12  --no-input
@@ -404,8 +423,8 @@ tests:
     command: auth0 users show $(cat ./integration/identifiers/user-id) --format json
     stdout:
       json:
-        Email: "newuser@example.com"
-        Connection: "Username-Password-Authentication"
+        email:      "newuser@example.com"
+        connection: "Username-Password-Authentication"
     exit-code: 0
 
   users show:
@@ -421,14 +440,14 @@ tests:
     command: auth0 users update $(cat ./integration/identifiers/user-id)  --email betteruser@example.com  --format json --no-input
     stdout:
       json:
-        Email: betteruser@example.com
+        email: betteruser@example.com
     exit-code: 0
 
   users update name:
     command: auth0 users update $(cat ./integration/identifiers/user-id)  --name integration-test-user-bettername  --format json --no-input
     stdout:
       json:
-        Email: betteruser@example.com # Name is not being displayed, hence using email
+        email: betteruser@example.com # Name is not being displayed, hence using email
     exit-code: 0
 
   # Test 'roles create'
@@ -437,8 +456,8 @@ tests:
     exit-code: 0
     stdout:
       json:
-        Name: integration-test-role-new1
-        Description: testRole
+        name:         integration-test-role-new1
+        description:  testRole
 
   roles create and check output:
     command: auth0 roles create --name integration-test-role-new2 --description testRole2 --no-input
@@ -457,8 +476,8 @@ tests:
     command: auth0 roles show $(cat ./integration/identifiers/role-id) --format json
     stdout:
       json:
-        Name: integration-test-role-newRole
-        Description: integration-test-role
+        name:        integration-test-role-newRole
+        description: integration-test-role
     exit-code: 0
 
   roles show:
@@ -474,14 +493,14 @@ tests:
     command: auth0 roles update $(cat ./integration/identifiers/role-id) --name integration-test-role-betterName --format json
     stdout:
       json:
-        Name: integration-test-role-betterName
+        name: integration-test-role-betterName
     exit-code: 0
 
   roles update description:
     command: auth0 roles update $(cat ./integration/identifiers/role-id) --description betterDescription --format json
     stdout:
       json:
-        Description: betterDescription
+        description: betterDescription
     exit-code: 0
 
   # Test 'rules create'
@@ -562,4 +581,5 @@ tests:
     stdout:
       json:
         enabled: "false"
+        description: betterDescription
     exit-code: 0

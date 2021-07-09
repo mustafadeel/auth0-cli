@@ -49,7 +49,7 @@ fmt.Printf("Created client %s\n", c.ClientID)
 
 The following Auth0 resources are supported:
 
-- [ ] [Actions](https://auth0.com/docs/api/management/v2/#!/Actions/get_actions)
+- [x] [Actions](https://auth0.com/docs/api/management/v2/#!/Actions/get_actions)
 - [x] [Branding](https://auth0.com/docs/api/management/v2/#!/Branding/get_branding)
 - [x] [Clients (Applications)](https://auth0.com/docs/api/management/v2#!/Clients/get_clients)
 - [x] [Client Grants](https://auth0.com/docs/api/management/v2#!/Client_Grants/get_client_grants)
@@ -61,7 +61,7 @@ The following Auth0 resources are supported:
 - [x] [Hook Secrets](https://auth0.com/docs/api/management/v2/#!/Hooks/get_secrets)
 - [x] [Log Streams](https://auth0.com/docs/api/management/v2#!/Log_Streams/get_log_streams)
 - [x] [Logs](https://auth0.com/docs/api/management/v2#!/Logs/get_logs)
-- [ ] [Organizations](https://auth0.com/docs/api/management/v2#!/Organizations/get_organizations)
+- [x] [Organizations](https://auth0.com/docs/api/management/v2#!/Organizations/get_organizations)
 - [x] [Prompts](https://auth0.com/docs/api/management/v2#!/Prompts/get_prompts)
 - [x] [Resource Servers (APIs)](https://auth0.com/docs/api/management/v2#!/Resource_Servers/get_resource_servers)
 - [x] [Roles](https://auth0.com/docs/api/management/v2#!/Roles)
@@ -77,7 +77,7 @@ The following Auth0 resources are supported:
 - [x] [Jobs](https://auth0.com/docs/api/management/v2#!/Jobs/get_jobs_by_id)
 - [x] [Stats](https://auth0.com/docs/api/management/v2#!/Stats/get_active_users)
 - [x] [Tenants](https://auth0.com/docs/api/management/v2#!/Tenants/get_settings)
-- [ ] [Anomaly](https://auth0.com/docs/api/management/v2#!/Anomaly/get_ips_by_id)
+- [X] [Anomaly](https://auth0.com/docs/api/management/v2#!/Anomaly/get_ips_by_id)
 - [x] [Tickets](https://auth0.com/docs/api/management/v2#!/Tickets/post_email_verification)
 - [x] [Signing Keys](https://auth0.com/docs/api/management/v2#!/Keys/get_signing_keys)
 

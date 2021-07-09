@@ -9,11 +9,23 @@ import (
 
 	"github.com/auth0/auth0-cli/internal/analytics"
 	"github.com/auth0/auth0-cli/internal/ansi"
+	"github.com/auth0/auth0-cli/internal/auth"
 	"github.com/auth0/auth0-cli/internal/buildinfo"
 	"github.com/auth0/auth0-cli/internal/display"
 	"github.com/auth0/auth0-cli/internal/instrumentation"
+	"github.com/joeshaw/envdecode"
 	"github.com/spf13/cobra"
 )
+
+const rootShort = "Supercharge your development workflow."
+
+// authCfg defines the configurable auth context the cli will run in.
+var authCfg struct {
+	Audience           string `env:"AUTH0_AUDIENCE,default=https://*.auth0.com/api/v2/"`
+	ClientID           string `env:"AUTH0_CLIENT_ID,default=2iZo3Uczt5LFHacKdM0zzgUO2eG2uDjT"`
+	DeviceCodeEndpoint string `env:"AUTH0_DEVICE_CODE_ENDPOINT,default=https://auth0.auth0.com/oauth/device/code"`
+	OauthTokenEndpoint string `env:"AUTH0_OAUTH_TOKEN_ENDPOINT,default=https://auth0.auth0.com/oauth/token"`
+}
 
 // Execute is the primary entrypoint of the CLI app.
 func Execute() {
@@ -27,14 +39,70 @@ func Execute() {
 		tracker:  analytics.NewTracker(),
 	}
 
+	rootCmd := buildRootCmd(cli)
+
+	rootCmd.SetUsageTemplate(namespaceUsageTemplate())
+	addPersistentFlags(rootCmd, cli)
+	addSubcommands(rootCmd, cli)
+
+	// TODO(cyx): backport this later on using latest auth0/v5.
+	// rootCmd.AddCommand(actionsCmd(cli))
+	// rootCmd.AddCommand(triggersCmd(cli))
+
+	defer func() {
+		if v := recover(); v != nil {
+			err := fmt.Errorf("panic: %v", v)
+
+			// If we're in development mode, we should throw the
+			// panic for so we have less surprises. For
+			// non-developers, we'll swallow the panics.
+			if instrumentation.ReportException(err) {
+				fmt.Println(panicMessage)
+			} else {
+				panic(v)
+			}
+		}
+	}()
+
+	// platform specific terminal initialization:
+	// this should run for all commands,
+	// for most of the architectures there's no requirements:
+	ansi.InitConsole()
+
+	cancelCtx := contextWithCancel()
+	if err := rootCmd.ExecuteContext(cancelCtx); err != nil {
+		cli.renderer.Heading("error")
+		cli.renderer.Errorf(err.Error())
+
+		instrumentation.ReportException(err)
+		os.Exit(1)
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(cancelCtx, 3*time.Second)
+	// defers are executed in LIFO order
+	defer cancel()
+	defer cli.tracker.Wait(timeoutCtx) // No event should be tracked after this has run, or it will panic e.g. in earlier deferred functions
+}
+
+func buildRootCmd(cli *cli) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:           "auth0",
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Short:         "Supercharge your development workflow.",
-		Long:          "Supercharge your development workflow.\n" + getLogin(cli),
+		Short:         rootShort,
+		Long:          rootShort + "\n" + getLogin(cli),
 		Version:       buildinfo.GetVersionWithCommit(),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := envdecode.StrictDecode(&authCfg); err != nil {
+				return fmt.Errorf("could not decode env: %w", err)
+			}
+
+			cli.authenticator = &auth.Authenticator{
+				Audience:           authCfg.Audience,
+				ClientID:           authCfg.ClientID,
+				DeviceCodeEndpoint: authCfg.DeviceCodeEndpoint,
+				OauthTokenEndpoint: authCfg.OauthTokenEndpoint,
+			}
 			ansi.DisableColors = cli.noColor
 			prepareInteractivity(cmd)
 
@@ -47,7 +115,7 @@ func Execute() {
 			// We're tracking the login command in its Run method
 			// so we'll only add this defer if the command is not login
 			defer func() {
-				if cli.isLoggedIn() {
+				if cli.tracker != nil && cli.isLoggedIn() {
 					cli.tracker.TrackCommandRun(cmd, cli.config.InstallID)
 				}
 			}()
@@ -85,7 +153,10 @@ func Execute() {
 		},
 	}
 
-	rootCmd.SetUsageTemplate(namespaceUsageTemplate())
+	return rootCmd
+}
+
+func addPersistentFlags(rootCmd *cobra.Command, cli *cli) {
 	rootCmd.PersistentFlags().StringVar(&cli.tenant,
 		"tenant", cli.config.DefaultTenant, "Specific tenant to use.")
 
@@ -103,63 +174,32 @@ func Execute() {
 
 	rootCmd.PersistentFlags().BoolVar(&cli.noColor,
 		"no-color", false, "Disable colors.")
+
+}
+
+func addSubcommands(rootCmd *cobra.Command, cli *cli) {
 	// order of the comamnds here matters
 	// so add new commands in a place that reflect its relevance or relation with other commands:
 	rootCmd.AddCommand(loginCmd(cli))
+	rootCmd.AddCommand(logoutCmd(cli))
 	rootCmd.AddCommand(configCmd(cli))
 	rootCmd.AddCommand(tenantsCmd(cli))
-	rootCmd.AddCommand(usersCmd(cli))
 	rootCmd.AddCommand(appsCmd(cli))
+	rootCmd.AddCommand(usersCmd(cli))
 	rootCmd.AddCommand(rulesCmd(cli))
+	rootCmd.AddCommand(actionsCmd(cli))
 	rootCmd.AddCommand(apisCmd(cli))
+	rootCmd.AddCommand(rolesCmd(cli))
+	rootCmd.AddCommand(organizationsCmd(cli))
+	rootCmd.AddCommand(brandingCmd(cli))
+	rootCmd.AddCommand(ipsCmd(cli))
 	rootCmd.AddCommand(quickstartsCmd(cli))
 	rootCmd.AddCommand(testCmd(cli))
 	rootCmd.AddCommand(logsCmd(cli))
-	rootCmd.AddCommand(logoutCmd(cli))
-	rootCmd.AddCommand(brandingCmd(cli))
-	rootCmd.AddCommand(rolesCmd(cli))
-	rootCmd.AddCommand(ipsCmd(cli))
 
 	// keep completion at the bottom:
 	rootCmd.AddCommand(completionCmd(cli))
 
-	// TODO(cyx): backport this later on using latest auth0/v5.
-	// rootCmd.AddCommand(actionsCmd(cli))
-	// rootCmd.AddCommand(triggersCmd(cli))
-
-	defer func() {
-		if v := recover(); v != nil {
-			err := fmt.Errorf("panic: %v", v)
-
-			// If we're in development mode, we should throw the
-			// panic for so we have less surprises. For
-			// non-developers, we'll swallow the panics.
-			if instrumentation.ReportException(err) {
-				fmt.Println(panicMessage)
-			} else {
-				panic(v)
-			}
-		}
-	}()
-
-	// platform specific terminal initialization:
-	// this should run for all commands,
-	// for most of the architectures there's no requirements:
-	ansi.InitConsole()
-
-	cancelCtx :=  contextWithCancel()
-	if err := rootCmd.ExecuteContext(cancelCtx); err != nil {
-		cli.renderer.Heading("error")
-		cli.renderer.Errorf(err.Error())
-
-		instrumentation.ReportException(err)
-		os.Exit(1)
-	}
-
-	timeoutCtx, cancel := context.WithTimeout(cancelCtx, 3*time.Second)
-	// defers are executed in LIFO order
-	defer cancel()
-	defer cli.tracker.Wait(timeoutCtx) // No event should be tracked after this has run, or it will panic e.g. in earlier deferred functions
 }
 
 func contextWithCancel() context.Context {

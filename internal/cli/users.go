@@ -250,7 +250,7 @@ auth0 users show <id>`,
 				a, err = cli.api.User.Read(inputs.ID)
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load user. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load user: %w", err)
 			}
 
 			// get the current connection
@@ -345,7 +345,7 @@ auth0 users update -n John Doe --email john.doe@example.com`,
 				current, err = cli.api.User.Read(inputs.ID)
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load user. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load user: %w", err)
 			}
 			// using getUserConnection to get connection name from user Identities
 			// just using current.connection will return empty
@@ -425,8 +425,8 @@ func openUserCmd(cli *cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "open",
 		Args:  cobra.MaximumNArgs(1),
-		Short: "Open user details page in Auth0 Manage",
-		Long:  "Open user details page in Auth0 Manage.",
+		Short: "Open user details page in the Auth0 Dashboard",
+		Long:  "Open user details page in the Auth0 Dashboard.",
 		Example: `auth0 users open <id>
 auth0 users open "auth0|xxxxxxxxxx"`,
 		RunE: func(cmd *cobra.Command, args []string) error {

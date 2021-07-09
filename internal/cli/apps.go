@@ -249,7 +249,7 @@ auth0 apps show <id>`,
 				a, err = cli.api.Client.Read(inputs.ID)
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load application. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load application: %w", err)
 			}
 
 			cli.renderer.ApplicationShow(a, inputs.Reveal)
@@ -494,7 +494,7 @@ auth0 apps update <id> -n myapp --type [native|spa|regular|m2m]`,
 				current, err = cli.api.Client.Read(inputs.ID)
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load application. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load application: %w", err)
 			}
 
 			// Prompt for app name
@@ -663,8 +663,8 @@ func openAppCmd(cli *cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "open",
 		Args:    cobra.MaximumNArgs(1),
-		Short:   "Open application settings page in Auth0 Manage",
-		Long:    "Open application settings page in Auth0 Manage.",
+		Short:   "Open application settings page in the Auth0 Dashboard",
+		Long:    "Open application settings page in the Auth0 Dashboard.",
 		Example: "auth0 apps open <id>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {

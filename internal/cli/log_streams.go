@@ -222,7 +222,7 @@ auth0 logs streams show <id>`,
 				a, err = cli.api.LogStream.Read(inputs.ID)
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load log stream. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load log stream: %w", err)
 			}
 			cli.renderer.LogStreamShow(a)
 			return nil
@@ -487,7 +487,7 @@ auth0 logs streams update <id> -n myeventbridge -t eventbridge`,
 				current, err = cli.api.LogStream.Read(inputs.ID)
 				return err
 			}); err != nil {
-				return fmt.Errorf("Unable to load logstream. The Id %v specified doesn't exist", inputs.ID)
+				return fmt.Errorf("Unable to load logstream: %w", err)
 			}
 
 			// Prompt for log stream name
@@ -743,8 +743,8 @@ func openLogStreamsCmd(cli *cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "open",
 		Args:    cobra.MaximumNArgs(1),
-		Short:   "Open log stream settings page in Auth0 Manage",
-		Long:    "Open log stream settings page in Auth0 Manage.",
+		Short:   "Open log stream settings page in the Auth0 Dashboard",
+		Long:    "Open log stream settings page in the Auth0 Dashboard.",
 		Example: "auth0 logs streams open <id>",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
