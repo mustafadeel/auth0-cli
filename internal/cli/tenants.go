@@ -202,6 +202,8 @@ func addTenantCmd(cli *cli) *cobra.Command {
 		},
 	}
 
+	tenantClientID.RegisterString(cmd, &inputs.ClientID, "")
+	tenantClientSecret.RegisterString(cmd, &inputs.ClientSecret, "")
 	return cmd
 }
 
