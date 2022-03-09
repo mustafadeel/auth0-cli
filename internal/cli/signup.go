@@ -12,18 +12,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func loginCmd(cli *cli) *cobra.Command {
+var (
+	signupEmail = Flag{
+		Name:       "Email",
+		LongForm:   "email",
+		ShortForm:  "e",
+		Help:       "Email to use for signup.",
+		IsRequired: true,
+	}
+)
+
+func signupCmd(cli *cli) *cobra.Command {
+	var inputs struct {
+		Email string
+	}
+
 	cmd := &cobra.Command{
-		Use:   "login",
-		Args:  cobra.NoArgs,
-		Short: "Authenticate the Auth0 CLI",
-		Long:  "Sign in to your Auth0 account and authorize the CLI to access the Management API.",
+		Use:   "signup",
+		Args:  cobra.MaximumNArgs(1), //expected: email address
+		Short: "Get a new account and authenticate the Auth0 CLI",
+		Long:  "Get your Auth0 account and authorize the CLI to access the Management API.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			_, err := RunLogin(ctx, cli, false)
+			_, err := RunSignup(ctx, cli, args[0])
 			if err == nil {
 				cli.tracker.TrackCommandRun(cmd, cli.config.InstallID)
 			}
+			fmt.Print("error occurred\n\n")
 			return err
 		},
 	}
@@ -33,6 +48,7 @@ func loginCmd(cli *cli) *cobra.Command {
 		cmd.Parent().HelpFunc()(cmd, args)
 	})
 
+	signupEmail.RegisterString(cmd, &inputs.Email, "")
 	return cmd
 }
 
@@ -40,17 +56,12 @@ func loginCmd(cli *cli) *cobra.Command {
 // by showing the login instructions, opening the browser.
 // Use `expired` to run the login from other commands setup:
 // this will only affect the messages.
-func RunLogin(ctx context.Context, cli *cli, expired bool) (tenant, error) {
-	if expired {
-		cli.renderer.Warnf("Please sign in to re-authorize the CLI.")
-	} else {
-		fmt.Print("✪ Welcome to the Auth0 CLI 🎊\n\n")
-		fmt.Print("If you don't have an account, please run $ auth0 signup <email>\n\n")
-	}
+func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
+	fmt.Print("✪ Welcome to the Auth0 CLI 🎊\n\n")
 
 	state, err := cli.authenticator.Start(ctx)
 	if err != nil {
-		return tenant{}, fmt.Errorf("Could not start the authentication process: %w.", err)
+		return tenant{}, fmt.Errorf("Could not start the authentication process: %w", err)
 	}
 
 	fmt.Printf("Your Device Confirmation code is: %s\n\n", ansi.Bold(state.UserCode))
@@ -58,9 +69,10 @@ func RunLogin(ctx context.Context, cli *cli, expired bool) (tenant, error) {
 	if cli.noInput {
 		cli.renderer.Infof("Open the following URL in a browser: %s\n", ansi.Green(state.VerificationURI))
 	} else {
-		cli.renderer.Infof("%s to open the browser to log in or %s to quit...", ansi.Green("Press Enter"), ansi.Red("^C"))
+		cli.renderer.Infof("%s to open the browser to sign up or %s to quit...", ansi.Green("Press Enter"), ansi.Red("^C"))
 		fmt.Scanln()
-		err = browser.OpenURL(state.VerificationURI)
+		browserURL := fmt.Sprintf("https://auth0.com/api/auth/signup?redirectTo=dashboard&login_hint=%s", email)
+		err = browser.OpenURL(browserURL)
 
 		if err != nil {
 			cli.renderer.Warnf("Couldn't open the URL, please do it manually: %s.", state.VerificationURI)
@@ -80,6 +92,8 @@ func RunLogin(ctx context.Context, cli *cli, expired bool) (tenant, error) {
 	fmt.Print("\n")
 	cli.renderer.Infof("Successfully logged in.")
 	cli.renderer.Infof("Tenant: %s\n", res.Domain)
+	cli.renderer.Infof("Access Token: %s\n", res.AccessToken)
+	cli.renderer.Infof("Refresh Token: %s\n", res.RefreshToken)
 
 	// store the refresh token
 	secretsStore := &auth.Keyring{}

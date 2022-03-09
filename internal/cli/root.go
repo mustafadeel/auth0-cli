@@ -108,7 +108,7 @@ func buildRootCmd(cli *cli) *cobra.Command {
 
 			// If the user is trying to login, no need to go
 			// through setup.
-			if cmd.Use == "login" && cmd.Parent().Use == "auth0" {
+			if (cmd.Use == "login" || cmd.Use == "signup") && cmd.Parent().Use == "auth0" {
 				return nil
 			}
 
@@ -180,6 +180,7 @@ func addPersistentFlags(rootCmd *cobra.Command, cli *cli) {
 func addSubcommands(rootCmd *cobra.Command, cli *cli) {
 	// order of the comamnds here matters
 	// so add new commands in a place that reflect its relevance or relation with other commands:
+	rootCmd.AddCommand(signupCmd(cli))
 	rootCmd.AddCommand(loginCmd(cli))
 	rootCmd.AddCommand(logoutCmd(cli))
 	rootCmd.AddCommand(configCmd(cli))
