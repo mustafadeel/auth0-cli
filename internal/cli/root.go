@@ -180,6 +180,7 @@ func addPersistentFlags(rootCmd *cobra.Command, cli *cli) {
 func addSubcommands(rootCmd *cobra.Command, cli *cli) {
 	// order of the comamnds here matters
 	// so add new commands in a place that reflect its relevance or relation with other commands:
+	rootCmd.AddCommand(signupCmd(cli))
 	rootCmd.AddCommand(loginCmd(cli))
 	rootCmd.AddCommand(logoutCmd(cli))
 	rootCmd.AddCommand(configCmd(cli))
