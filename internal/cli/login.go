@@ -48,7 +48,7 @@ func RunLogin(ctx context.Context, cli *cli, expired bool) (tenant, error) {
 		fmt.Print("If you don't have an account, please run $ auth0 signup <email>\n\n")
 	}
 
-	state, err := cli.authenticator.Start(ctx)
+	state, err := cli.authenticator.Start(ctx, false)
 	if err != nil {
 		return tenant{}, fmt.Errorf("Could not start the authentication process: %w.", err)
 	}

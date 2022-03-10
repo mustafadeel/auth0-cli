@@ -29,12 +29,17 @@ func signupCmd(cli *cli) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "signup",
-		Args:  cobra.MaximumNArgs(1), //expected: email address
+		Args:  cobra.NoArgs,
 		Short: "Get a new account and authenticate the Auth0 CLI",
 		Long:  "Get your Auth0 account and authorize the CLI to access the Management API.",
+		Example: `auth0 signup -email <email>
+auth0 signup -e <email>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := signupEmail.Ask(cmd, &inputs.Email, nil); err != nil {
+				return err
+			}
 			ctx := cmd.Context()
-			_, err := RunSignup(ctx, cli, args[0])
+			_, err := RunSignup(ctx, cli, inputs.Email)
 			if err == nil {
 				cli.tracker.TrackCommandRun(cmd, cli.config.InstallID)
 			}
@@ -59,9 +64,9 @@ func signupCmd(cli *cli) *cobra.Command {
 func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
 	fmt.Print("✪ Welcome to the Auth0 CLI 🎊\n\n")
 
-	state, err := cli.authenticator.Start(ctx)
+	state, err := cli.authenticator.Start(ctx, true)
 	if err != nil {
-		return tenant{}, fmt.Errorf("Could not start the authentication process: %w", err)
+		return tenant{}, fmt.Errorf("Could not start the signup process: %w", err)
 	}
 
 	fmt.Printf("Your Device Confirmation code is: %s\n\n", ansi.Bold(state.UserCode))
@@ -71,7 +76,7 @@ func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
 	} else {
 		cli.renderer.Infof("%s to open the browser to sign up or %s to quit...", ansi.Green("Press Enter"), ansi.Red("^C"))
 		fmt.Scanln()
-		browserURL := fmt.Sprintf("https://auth0.com/api/auth/signup?redirectTo=dashboard&login_hint=%s", email)
+		browserURL := fmt.Sprintf(state.VerificationURI + "&loginhint=" + email)
 		err = browser.OpenURL(browserURL)
 
 		if err != nil {

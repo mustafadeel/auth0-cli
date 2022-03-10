@@ -20,6 +20,11 @@ const (
 	SecretsNamespace = "auth0-cli"
 )
 
+var signupScopes = []string{
+	"openid",
+	"offline_access",
+}
+
 var requiredScopes = []string{
 	"openid",
 	"offline_access", // <-- to get a refresh token.
@@ -92,8 +97,13 @@ func (s *State) IntervalDuration() time.Duration {
 // Start kicks-off the device authentication flow
 // by requesting a device code from Auth0,
 // The returned state contains the URI for the next step of the flow.
-func (a *Authenticator) Start(ctx context.Context) (State, error) {
-	s, err := a.getDeviceCode(ctx)
+func (a *Authenticator) Start(ctx context.Context, isSignup bool) (State, error) {
+	scopes := requiredScopes
+	if isSignup {
+		scopes = signupScopes
+	}
+	fmt.Printf("scopes: %s", scopes)
+	s, err := a.getDeviceCode(ctx, scopes)
 	if err != nil {
 		return State{}, fmt.Errorf("cannot get device code: %w", err)
 	}
@@ -158,10 +168,10 @@ func (a *Authenticator) Wait(ctx context.Context, state State) (Result, error) {
 	}
 }
 
-func (a *Authenticator) getDeviceCode(ctx context.Context) (State, error) {
+func (a *Authenticator) getDeviceCode(ctx context.Context, scopes []string) (State, error) {
 	data := url.Values{
 		"client_id": {a.ClientID},
-		"scope":     {strings.Join(requiredScopes, " ")},
+		"scope":     {strings.Join(scopes, " ")},
 		"audience":  {a.Audience},
 	}
 	r, err := http.PostForm(a.DeviceCodeEndpoint, data)
