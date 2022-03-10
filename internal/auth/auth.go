@@ -102,7 +102,6 @@ func (a *Authenticator) Start(ctx context.Context, isSignup bool) (State, error)
 	if isSignup {
 		scopes = signupScopes
 	}
-	fmt.Printf("scopes: %s", scopes)
 	s, err := a.getDeviceCode(ctx, scopes)
 	if err != nil {
 		return State{}, fmt.Errorf("cannot get device code: %w", err)

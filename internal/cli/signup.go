@@ -43,7 +43,6 @@ auth0 signup -e <email>`,
 			if err == nil {
 				cli.tracker.TrackCommandRun(cmd, cli.config.InstallID)
 			}
-			fmt.Print("error occurred\n\n")
 			return err
 		},
 	}
@@ -76,7 +75,7 @@ func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
 	} else {
 		cli.renderer.Infof("%s to open the browser to sign up or %s to quit...", ansi.Green("Press Enter"), ansi.Red("^C"))
 		fmt.Scanln()
-		browserURL := fmt.Sprintf(state.VerificationURI + "&loginhint=" + email)
+		browserURL := fmt.Sprintf(state.VerificationURI + "&login_hint=" + email)
 		err = browser.OpenURL(browserURL)
 
 		if err != nil {
@@ -97,8 +96,6 @@ func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
 	fmt.Print("\n")
 	cli.renderer.Infof("Successfully logged in.")
 	cli.renderer.Infof("Tenant: %s\n", res.Domain)
-	cli.renderer.Infof("Access Token: %s\n", res.AccessToken)
-	cli.renderer.Infof("Refresh Token: %s\n", res.RefreshToken)
 
 	// store the refresh token
 	secretsStore := &auth.Keyring{}
