@@ -274,14 +274,6 @@ func createTenantCmd(cli *cli) *cobra.Command {
 			if tenantResult.Error != "" {
 				cli.renderer.Infof("Unable to add tenant: %s", tenantResult.Message)
 			} else {
-				//add tenant to cli
-				ten := tenant{
-					Domain:       tenantResult.Name,
-					ClientID:     tenantResult.ClientId,
-					ClientSecret: tenantResult.ClientSecret,
-				}
-				cli.addTenant(ten)
-
 				cli.renderer.Infof("Tenant added successfully 🎉")
 				cli.renderer.Infof("  Name         : %s", tenantResult.Name)
 				cli.renderer.Infof("  Client Id    : %s", tenantResult.ClientId)
