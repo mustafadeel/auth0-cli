@@ -21,11 +21,11 @@ import (
 	"github.com/auth0/auth0-cli/internal/buildinfo"
 	"github.com/auth0/auth0-cli/internal/display"
 	"github.com/auth0/auth0-cli/internal/iostream"
+	"github.com/auth0/go-auth0/management"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/auth0/go-auth0/management"
 )
 
 const (

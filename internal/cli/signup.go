@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/auth0/auth0-cli/internal/ansi"
@@ -28,16 +29,12 @@ func signupCmd(cli *cli) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "signup",
-		Args:  cobra.NoArgs,
-		Short: "Get a new account and authenticate the Auth0 CLI",
-		Long:  "Get your Auth0 account and authorize the CLI to access the Management API.",
-		Example: `auth0 signup -email <email>
-auth0 signup -e <email>`,
+		Use:     "signup",
+		Args:    cobra.NoArgs,
+		Short:   "Get a new account and authenticate the Auth0 CLI",
+		Long:    "Get your Auth0 account and authorize the CLI to access the Management API.",
+		Example: `auth0 signup`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := signupEmail.Ask(cmd, &inputs.Email, nil); err != nil {
-				return err
-			}
 			ctx := cmd.Context()
 			_, err := RunSignup(ctx, cli, inputs.Email)
 			if err == nil {
@@ -75,8 +72,7 @@ func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
 	} else {
 		cli.renderer.Infof("%s to open the browser to sign up or %s to quit...", ansi.Green("Press Enter"), ansi.Red("^C"))
 		fmt.Scanln()
-		browserURL := fmt.Sprintf(state.VerificationURI + "&login_hint=" + email)
-		err = browser.OpenURL(browserURL)
+		err = browser.OpenURL(state.VerificationURI)
 
 		if err != nil {
 			cli.renderer.Warnf("Couldn't open the URL, please do it manually: %s.", state.VerificationURI)
@@ -84,18 +80,20 @@ func RunSignup(ctx context.Context, cli *cli, email string) (tenant, error) {
 	}
 
 	var res auth.Result
-	err = ansi.Spinner("Waiting for login to complete in browser", func() error {
+	err = ansi.Spinner("Waiting for signup to complete in browser", func() error {
 		res, err = cli.authenticator.Wait(ctx, state)
 		return err
 	})
 
 	if err != nil {
-		return tenant{}, fmt.Errorf("login error: %w", err)
+		return tenant{}, fmt.Errorf("signup error: %w", err)
 	}
 
 	fmt.Print("\n")
-	cli.renderer.Infof("Successfully logged in.")
-	cli.renderer.Infof("Tenant: %s\n", res.Domain)
+	cli.renderer.Infof("Successfully signed up!")
+	if strings.Contains(authCfg.DeviceCodeEndpoint, res.Domain) {
+		cli.renderer.Infof("Time to create your first tenant!\n\nUse `auth0 tenants create` to create your first tenant.")
+	}
 
 	// store the refresh token
 	secretsStore := &auth.Keyring{}

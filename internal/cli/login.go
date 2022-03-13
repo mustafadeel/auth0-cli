@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/auth0/auth0-cli/internal/ansi"
@@ -79,8 +80,12 @@ func RunLogin(ctx context.Context, cli *cli, expired bool) (tenant, error) {
 
 	fmt.Print("\n")
 	cli.renderer.Infof("Successfully logged in.")
-	cli.renderer.Infof("Tenant: %s\n", res.Domain)
 
+	if strings.Contains(authCfg.DeviceCodeEndpoint, res.Domain) {
+		cli.renderer.Infof("No tenants found. Use `auth0 tenants create` to create your first tenant.")
+	} else {
+		cli.renderer.Infof("Tenant: %s\n", res.Domain)
+	}
 	// store the refresh token
 	secretsStore := &auth.Keyring{}
 	err = secretsStore.Set(auth.SecretsNamespace, res.Domain, res.RefreshToken)
